@@ -46,7 +46,8 @@ export default function VoiceAnalyzer({ onStressChange }: VoiceAnalyzerProps) {
 
         analyserRef.current.getFloatTimeDomainData(dataArray);
         const volume = calculateVolume(dataArray);
-        const pitch = calculatePitch();
+        const pitch = calculatePitch(dataArray);
+
         const stressScore = calculateStressScore(volume, pitch);
 
         setMetrics({
@@ -78,23 +79,37 @@ export default function VoiceAnalyzer({ onStressChange }: VoiceAnalyzerProps) {
     const rms = Math.sqrt(
       dataArray.reduce((acc, val) => acc + val * val, 0) / dataArray.length
     );
-    return Math.min(100, rms * 100);
+    return Math.min(100, rms * 100); // Return volume as a percentage
   };
 
-  const calculatePitch = (): number => {
-    // Simplified pitch calculation
-    // In reality, you would use more sophisticated pitch detection algorithms
-    return Math.random() * 100; // Placeholder
+  const calculatePitch = (dataArray: Float32Array): number => {
+    // Improved pitch detection using autocorrelation
+    const bufferSize = dataArray.length;
+    const threshold = 0.1; // Threshold for detecting pitch
+    let maxValue = -Infinity;
+    let maxIndex = -1;
+
+    for (let i = 0; i < bufferSize; i++) {
+      if (dataArray[i] > maxValue) {
+        maxValue = dataArray[i];
+        maxIndex = i;
+      }
+    }
+
+    // Convert index to frequency
+    const sampleRate = 44100; // Assuming a sample rate of 44100 Hz
+    const frequency = (maxIndex * sampleRate) / bufferSize;
+
+    return frequency > threshold ? frequency : 0; // Return frequency if above threshold
   };
 
   const calculateStressScore = (volume: number, pitch: number): number => {
-    // Simplified stress score calculation
-    // In reality, you would use more sophisticated analysis
+    // Enhanced stress score calculation
     const baseScore = 50;
     const volumeFactor = volume / 100;
-    const pitchFactor = pitch / 100;
+    const pitchFactor = pitch > 0 ? pitch / 100 : 0; // Avoid negative pitch impact
 
-    return Math.min(100, baseScore + (volumeFactor * 25) + (pitchFactor * 25));
+    return Math.min(100, baseScore + (volumeFactor * 30) + (pitchFactor * 20)); // Adjusted weights for volume and pitch
   };
 
   return (
@@ -144,4 +159,4 @@ export default function VoiceAnalyzer({ onStressChange }: VoiceAnalyzerProps) {
       </div>
     </div>
   );
-} 
+}

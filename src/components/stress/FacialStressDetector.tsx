@@ -1,11 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
-import * as faceapi from 'face-api.js';
+import * as faceapi from 'face-api.js'; // Ensure face-api.js is installed and imported correctly
+
 
 interface FacialStressDetectorProps {
   onStressChange: (stressLevel: number) => void;
 }
 
-const FacialStressDetector: React.FC<FacialStressDetectorProps> = ({ onStressChange }) => {
+const FacialStressDetector: React.FC<FacialStressDetectorProps> = ({ onStressChange }: FacialStressDetectorProps) => {
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const [stressLevel, setStressLevel] = useState(0);
   const [displayedStressLevel, setDisplayedStressLevel] = useState(0);
@@ -40,14 +42,19 @@ const FacialStressDetector: React.FC<FacialStressDetectorProps> = ({ onStressCha
   }, [stressLevel]);
 
   useEffect(() => {
-    const loadModels = async () => {
+const loadModels = async () => {
+    setError(null);
+    setLoadingProgress(0);
+
       try {
         setError(null);
         setLoadingProgress(0);
 
         // Define model URLs with full paths
-        const modelPath = '/models';
-        const models = [
+        const modelPath = '/models'; // Ensure this path is correct
+
+        const models = [ // Define model URLs with full paths
+
           { name: 'tiny_face_detector', url: `${modelPath}/tiny_face_detector_model-weights_manifest.json` },
           { name: 'face_expression', url: `${modelPath}/face_expression_model-weights_manifest.json` },
           { name: 'face_landmarks', url: `${modelPath}/face_landmark_68_model-weights_manifest.json` }
@@ -56,7 +63,8 @@ const FacialStressDetector: React.FC<FacialStressDetectorProps> = ({ onStressCha
         // Load models sequentially with progress tracking
         for (let i = 0; i < models.length; i++) {
           const model = models[i];
-          console.log(`Loading model: ${model.name}`);
+          console.log(`Loading model: ${model.name} from ${model.url}`);
+
           
           try {
             switch (model.name) {
@@ -76,13 +84,16 @@ const FacialStressDetector: React.FC<FacialStressDetectorProps> = ({ onStressCha
             throw new Error(`Failed to load model: ${model.name}. Please check if the model files are present in the /public/models directory.`);
           }
           
-          setLoadingProgress(((i + 1) / models.length) * 100);
+          setLoadingProgress(((i + 1) / models.length) * 100); // Update loading progress
+
         }
 
-        setIsModelLoaded(true);
+        setIsModelLoaded(true); // All models loaded successfully
+
         console.log('All face detection models loaded successfully');
       } catch (err) {
-        console.error('Error loading models:', err);
+        console.error('Error loading models from /models directory:', err);
+
         setError(err instanceof Error ? err.message : 'Failed to load face detection models. Please check if the model files are present in the /public/models directory.');
       }
     };
@@ -169,13 +180,11 @@ const FacialStressDetector: React.FC<FacialStressDetectorProps> = ({ onStressCha
     const detectFaces = async () => {
       try {
         // Detect faces with expressions
-        const detections = await faceapi.detectAllFaces(
-          video,
-          new faceapi.TinyFaceDetectorOptions({ 
+        const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions({ 
             inputSize: 320, 
             scoreThreshold: 0.3 
-          })
-        ).withFaceExpressions();
+          })).withFaceExpressions();
+
 
         // Clear canvas
         const context = canvas.getContext('2d');
@@ -219,7 +228,8 @@ const FacialStressDetector: React.FC<FacialStressDetectorProps> = ({ onStressCha
     setTimeout(detectFaces, 100);
   };
 
-  const calculateStressScore = (expressions: faceapi.FaceExpressions): number => {
+const calculateStressScore = (expressions: faceapi.FaceExpressions): number => { // Ensure expressions is of the correct type
+
     const weights = {
       angry: 100,
       disgusted: 90,
@@ -232,7 +242,8 @@ const FacialStressDetector: React.FC<FacialStressDetectorProps> = ({ onStressCha
     let totalScore = 0;
     let totalWeight = 0;
 
-    Object.entries(expressions).forEach(([emotion, probability]) => {
+    Object.entries(expressions).forEach(([emotion, probability]: [string, number]) => { // Specify types for entries
+
       if (weights[emotion as keyof typeof weights] !== undefined) {
         totalScore += (weights[emotion as keyof typeof weights] * probability);
         totalWeight += probability;
@@ -329,4 +340,4 @@ const FacialStressDetector: React.FC<FacialStressDetectorProps> = ({ onStressCha
   );
 };
 
-export default FacialStressDetector; 
+export default FacialStressDetector;
